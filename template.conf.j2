@@ -1,0 +1,304 @@
+exit all
+configure
+#--------------------------------------------------
+echo "System Configuration"
+#--------------------------------------------------
+system
+name "{{ hostname }}"
+coordinates "unknown"
+snmp
+packet-size 9216
+exit
+time
+ntp
+server 10.10.10.10 prefer
+no shutdown
+exit
+sntp
+shutdown
+exit
+dst-zone EDT
+start second sunday march 02:00
+end first sunday november 02:00
+exit
+zone UTC
+exit
+thresholds
+rmon
+exit
+exit
+exit
+#--------------------------------------------------
+echo "System Security Configuration"
+#--------------------------------------------------
+system
+security
+telnet-server
+ftp-server
+management-access-filter
+ip-filter
+shutdown
+default-action permit
+entry 25
+description "Management Networks"
+src-ip X.X.X.X/16
+action permit
+exit
+entry 50
+description "snmp"
+protocol udp
+dst-port 161 65535
+action deny
+exit
+entry 1000
+description "snmp"
+protocol udp
+dst-port 161 65535
+action deny
+exit
+entry 1005
+description "snmp-trap"
+protocol udp
+dst-port 162 65535
+action deny
+exit
+entry 1010
+description "ssh"
+protocol tcp
+dst-port 22 65535
+action deny-host-unreachable
+exit
+entry 1015
+description "telnet"
+protocol tcp
+dst-port 23 65535
+action deny-host-unreachable
+exit
+entry 1020
+description "ftp"
+protocol tcp
+dst-port 21 65535
+action deny-host-unreachable
+exit
+entry 1025
+description "bgp"
+protocol tcp
+dst-port 179 65535
+action deny-host-unreachable
+exit
+entry 9999
+action permit
+exit
+no shutdown
+exit
+exit
+password
+attempts 5 time 5 lockout 10
+exit
+tacplus
+accounting record-type start-stop
+authorization
+server 1 address X.X.X.X secret "Put Hash Key Here" hash2
+server 2 address X.X.X.X secret "Put Has Key Here" hash2
+exit
+user-template "tacplus_default"
+access console ftp
+exit
+user "admin"
+password "Put Hash Key Here" hash2
+access console ftp
+console
+member "administrative"
+exit
+exit
+snmp
+community "Put Private Key Here" hash2 rwa version both
+community "public" hash2 r version both
+exit
+exit
+exit
+#--------------------------------------------------
+echo "Log Configuration"
+#--------------------------------------------------
+log
+filter 11
+default-action drop
+description "Major/Critical Traps"
+entry 10
+action forward
+match
+severity gte warning
+exit
+exit
+exit
+event-control "system" 2103 generate
+event-control "system" 2104 generate
+syslog 1
+address X.X.X.X
+exit
+syslog 2
+address X.X.X.X
+exit
+snmp-trap-group 1
+trap-target "X.X.X.X:162" address X.X.X.X snmpv2c notify-community "public"
+trap-target "X.X.X.X:162" address X.X.X.X snmpv2c notify-community "public"
+trap-target "X.X.X.X:162" address X.X.X.X snmpv2c notify-community "public"
+exit
+snmp-trap-group 11
+trap-target "NETENG" address X.X.X.X snmpv2c notify-community "public"
+exit
+snmp-trap-group 98
+description "NFM/P"
+trap-target "X.X.X.X:162" address X.X.X.X snmpv2c notify-community "private"
+trap-target "X.X.X.X:162" address X.X.X.X snmpv2c notify-community "private"
+exit
+log-id 1
+from debug-trace main security change
+to snmp 1024
+exit
+log-id 2
+from main security change
+to syslog 1
+exit
+log-id 3
+from main security change
+to syslog 2
+exit
+log-id 11
+filter 11
+from debug-trace main security change
+to snmp 1024
+exit
+log-id 97
+from debug-trace
+to memory
+exit
+log-id 98
+from main security
+to snmp 1024
+exit
+exit
+#--------------------------------------------------
+echo "System Security Cpm Hw Filters Configuration"
+#--------------------------------------------------
+system
+security
+exit
+exit
+#--------------------------------------------------
+echo "QoS Policy Configuration"
+#--------------------------------------------------
+qos
+#--------------------------------------------------
+echo "Frame Based Accounting Configuration"
+#--------------------------------------------------
+exit
+#--------------------------------------------------
+echo "Card Configuration"
+#--------------------------------------------------
+card 1
+mda 1
+exit
+exit
+#--------------------------------------------------
+echo "Port Configuration"
+#--------------------------------------------------
+port 1/1/25
+ethernet
+mode access uplink
+access
+uplink
+qos 2
+exit
+exit
+mtu 9212
+lldp
+dest-mac nearest-bridge
+admin-status tx-rx
+exit
+exit
+exit
+no shutdown
+exit
+#--------------------------------------------------
+echo "System Sync-If-Timing Configuration"
+#--------------------------------------------------
+system
+sync-if-timing
+begin
+no ql-selection
+ref1
+shutdown
+no ql-override
+exit
+ref2
+shutdown
+no ql-override
+exit
+commit
+exit
+exit
+#--------------------------------------------------
+echo "Router (Network Side) Configuration"
+#--------------------------------------------------
+router
+interface "system"
+address {{ systemip }}/32
+exit
+#--------------------------------------------------
+echo "Static Route Configuration"
+#--------------------------------------------------
+static-route 0.0.0.0/0 next-hop {{ gateway }}
+exit
+#--------------------------------------------------
+echo "Service Configuration"
+#--------------------------------------------------
+service
+customer 1 create
+description "Default customer"
+exit
+ies 1 customer 1 create
+interface "management" create
+exit
+exit
+ies 1 customer 1 create
+interface "Management" create
+address {{ ip }}/{{ masklen }}
+ip-mtu 1500
+sap 1/1/25:0.* create
+exit
+exit
+no shutdown
+exit
+exit
+#--------------------------------------------------
+echo "System Time NTP Configuration"
+#--------------------------------------------------
+system
+time
+ntp
+exit
+exit
+exit
+exit all
+#
+
+
+
+sleep 1
+admin save cf1:\config.cfg
+echo "See you on the other side, bro..."
+echo "  _____  ________      ______  _____   _____  "
+echo " |  __ \|  ____\ \    / / __ \|  __ \ / ____| "
+echo " | |  | | |__   \ \  / / |  | | |__) | (___   "
+echo " | |  | |  __|   \ \/ /| |  | |  ___/ \___ \  " 
+echo " | |__| | |____   \  / | |__| | |     ____) | "
+echo " |_____/|______|   \/   \____/|_|    |_____/  "
+echo "                                              "     
+                                             
+
+bof primary-config cf1:\config.cfg
+configure system snmp no shutdown
+bof save
+admin save
+admin reboot now

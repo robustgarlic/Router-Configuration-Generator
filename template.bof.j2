@@ -1,0 +1,13 @@
+# Generated bof config template #
+#
+primary-image      ftp://un:password@172.16.255.100/home/alu/SAS-D/6.0.R5/both.tim
+primary-config     tftp://172.16.255.100/{{ hostname }}.conf
+#uplinkA Port Settings:
+uplinkA-port       1/1/1
+uplinkA-address    {{ ip }}/{{ masklen }}
+uplinkA-vlan       null
+uplinkA-route      172.16.255.100/32 next-hop {{ gateway }}
+#System Settings:
+wait               3
+persist            on
+console-speed      115200
